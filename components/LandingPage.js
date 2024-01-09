@@ -3,12 +3,15 @@ import { useState, useEffect } from "react"
 //import  ReactNativeAsyncStorage from "@react-native-async-storage/async-storage"
 
 //Firebase imports
-import { app, database } from "../firebase"
+import { app, database, } from "../firebase"
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,  signOut, onAuthStateChanged} from "firebase/auth"
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
-import { collection, addDoc } from "firebase/firestore"
-import { useCollection } from "react-firebase-hooks/firestore"
+import { collection, addDoc, setDoc, getDoc, doc, updateDoc } from "firebase/firestore"
 
+//Contexts
+import { useClicks, useAutoClicks } from "../contexts/ClickContext";
+import { clickerCostState, autoClickerCostState } from "../contexts/UpgradeContext";
+import { usePointsState } from "../contexts/PointsContext";
 
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -31,8 +34,13 @@ if(Platform.OS === 'web'){
 
 
 const LandingPage = ({navigation}) => {
-    
 
+    const points = usePointsState()
+    const clickValue = useClicks()
+    const autoClickValue = useAutoClicks()
+    const clickUpgradeCost = clickerCostState()
+    const autoClickerUpgradeCost = autoClickerCostState()
+    
 
     const [enteredLoginEmail, setEnteredLoginEmail] = useState('someEmail@mail.com')
     const [enteredLoginPassword, setEnteredLoginPassWord] = useState('password')
@@ -71,15 +79,21 @@ const LandingPage = ({navigation}) => {
     async function userSignup(){
         try{
             const userCredential = await createUserWithEmailAndPassword(auth, enteredSignupEmail, enteredSignupPassword)
+
+            //checks that it's been logged in
             console.log('oprettet ny bruger: ' + userCredential.user.uid)
+
+            //Create a new game
             try{
-                await addDoc(collection(database, userCredential.user.uid), {
+                await setDoc(doc(database, userCredential.user.uid,  'GAME'), {
                     autoClickMultiplierVal: 1,
-                    autoClickCostVal: 30,
+                    autoClickerCostVal: 30,
                     clickMultiplierVal: 1,
                     clickerCostVal: 5,
                     pointsVal: 1
                 })
+                
+
                 console.log("new game created")
             } catch (err){
                 console.log('fejl i DB ' + err)
@@ -89,12 +103,29 @@ const LandingPage = ({navigation}) => {
             console.log('there was an error with signup: ' + err)
         }
     }
-
-     function logUserID(){
-        console.log(userId)
-    }
     
+    async function getCurrentDoc(){
 
+        console.log(autoClickerUpgradeCost)
+        const docRef = doc(database, userId, 'GAME');
+        const docSnap = await getDoc(docRef)
+
+        if (docSnap.exists()) {
+            console.log('Document data: ', docSnap.data());
+        } else {
+            console.log('no such doc')
+        }
+    }
+
+    function saveGameState(){
+        updateDoc(doc(database, userId, 'GAME'), {
+            autoClickMultiplierVal: autoClickValue,
+            autoClickerCostVal: autoClickerUpgradeCost,
+            clickMultiplierVal: clickValue,
+            clickerCostVal: clickUpgradeCost,
+            pointsVal: points
+        })
+    }
     return(
         <ScrollView>
             <View style={styles}>
@@ -127,19 +158,27 @@ const LandingPage = ({navigation}) => {
                 <Text></Text>     
                 </>}
                 { userId && <>
+                <Text>You currently have {points} points</Text>
+                
+                <Text>Each click currently generates {clickValue} points</Text>
+                <Text>It currently cost {clickUpgradeCost} points to upgrade the click</Text>
+
+                <Text>Each auto-click currently generates {autoClickValue} points</Text>
+                <Text>It currently cost {autoClickerUpgradeCost} points to upgrade the auto-click</Text>
+
+                <Button 
+                title="Save game"
+                onPress={saveGameState}
+                />
+                <Text></Text>
+
                 <Button 
                     title='Go to clicks'
                     onPress={() => navigation.navigate('Clicks')}
                 />
 
-                <Text></Text>
-
-                <Button 
-                    title='Go to upgrades'
-                    onPress={() => navigation.navigate('Clicks')}
-
-                />
-
+                
+                
                 <Text></Text>
 
                 <Button 
@@ -147,12 +186,16 @@ const LandingPage = ({navigation}) => {
                     onPress={userLogout}
                 />
 
+                
+
                 <Text></Text>
 
-                <Button
-                    title="log current user ID"
-                    onPress={logUserID}
+                <Button 
+                    title="Get current doc"
+                    onPress={getCurrentDoc}
                 />
+
+               
                 </>}
             
         </View>
@@ -178,11 +221,7 @@ const styles = StyleSheet.create({
 //These are imports 
  /*
     import { LogBox } from 'react-native';
-
-
-
-
-
+    import { useCollection } from "react-firebase-hooks/firestore"
  */
 
 //This part needs to be with the other hooks to not get error message
