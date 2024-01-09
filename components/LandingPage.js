@@ -6,7 +6,12 @@ import { useState, useEffect } from "react"
 import { app, database } from "../firebase"
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,  signOut, onAuthStateChanged} from "firebase/auth"
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import { collection, addDoc } from "firebase/firestore"
+import { useCollection } from "react-firebase-hooks/firestore"
+
+
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+
 
 
 //login save between session not working; see https://github.com/firebase/firebase-js-sdk/issues/7584
@@ -67,9 +72,26 @@ const LandingPage = ({navigation}) => {
         try{
             const userCredential = await createUserWithEmailAndPassword(auth, enteredSignupEmail, enteredSignupPassword)
             console.log('oprettet ny bruger: ' + userCredential.user.uid)
+            try{
+                await addDoc(collection(database, userCredential.user.uid), {
+                    autoClickMultiplierVal: 1,
+                    autoClickCostVal: 30,
+                    clickMultiplierVal: 1,
+                    clickerCostVal: 5,
+                    pointsVal: 1
+                })
+                console.log("new game created")
+            } catch (err){
+                console.log('fejl i DB ' + err)
+            }
+
         } catch(err) {
             console.log('there was an error with signup: ' + err)
         }
+    }
+
+     function logUserID(){
+        console.log(userId)
     }
     
 
@@ -124,6 +146,13 @@ const LandingPage = ({navigation}) => {
                     title="Sign out"
                     onPress={userLogout}
                 />
+
+                <Text></Text>
+
+                <Button
+                    title="log current user ID"
+                    onPress={logUserID}
+                />
                 </>}
             
         </View>
@@ -151,8 +180,7 @@ const styles = StyleSheet.create({
     import { LogBox } from 'react-native';
 
 
-    import { collection, addDoc } from "firebase/firestore"
-    import {useCollection} from "react-firebase-hooks/firestore"
+
 
 
  */
