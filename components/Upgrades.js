@@ -7,7 +7,7 @@ const Upgrades = ({navigation}) => {
         <View>
             <Text>This is the Upgrades section</Text>
             <Button 
-            title='Go to upgrades'
+            title='Go to clicks'
             onPress={() => navigation.navigate('Clicks')}
 
             />

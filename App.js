@@ -2,6 +2,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 //Components 
+import LandingPage from "./components/LandingPage";
 import Clicks from "./components/Click";
 import Upgrades from "./components/Upgrades";
 const App = () => {
@@ -11,8 +12,9 @@ const App = () => {
   return (
 
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Clicks">
+      <Stack.Navigator initialRouteName="LandingPage">
 
+        <Stack.Screen name="LandingPage" component={LandingPage} />
         <Stack.Screen name="Clicks" component={Clicks} />
         <Stack.Screen name="Upgrades" component={Upgrades} />
 
