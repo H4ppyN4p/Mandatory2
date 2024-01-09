@@ -8,7 +8,22 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,  s
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
-const auth = getAuth(app)
+
+//login save between session not working; see https://github.com/firebase/firebase-js-sdk/issues/7584
+//modified the node module at @firebase/auth/package.json - then the line:
+//"typings": "dist/auth.d.ts"
+//Was replaced with:
+//"typings": "/dist/rn/index.rn.d.ts"
+let auth 
+
+if(Platform.OS === 'web'){
+    getAuth(app)
+} else {
+    auth = initializeAuth(app, {
+        persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+    })
+}
+
 
 const LandingPage = ({navigation}) => {
     
